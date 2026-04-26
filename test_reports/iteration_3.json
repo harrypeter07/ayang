@@ -1,0 +1,64 @@
+{
+  "summary": "Frontend-only end-to-end testing of RCC Leads Closer flow on https://lead-caller-pro.preview.emergentagent.com. Setup leveraged direct API calls (POST /api/users + POST /api/leads with assigned_closer_id) for reliability after discovering the lead form payload field name. AuthContext logout->login race fix from iteration 2 is HOLDING for admin->closer and closer->filler role switches when localStorage+cookies are cleared between sessions; closer dashboard now reachable end-to-end. Verified closer dashboard, both lead cards, status pills, filters, StatusUpdateDialog Approved flow including 'Notes are required' validation, and Follow-up validation 'Pick a follow-up date'. Two issues remain: (1) closer-logout sometimes does not navigate to /login (state cleared but URL still /closer) — flaky, (2) filter-follow_today returns all leads instead of follow-up-today only — looks like backend filter is not honoring the follow_up_today query param.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/leads?follow_up_today=true (closer role)", "issue": "Returned all assigned leads (2) even when none had follow_up_date=today. Either the param is ignored or the closer scope branch skips the filter."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "CloserDashboard / AuthContext", "issue": "After clicking [data-testid=closer-logout] the in-memory user state is cleared but the URL sometimes remains /closer instead of redirecting to /login. Reproduced on 2nd run; first run worked. Likely missing a useNavigate('/login') after logout() OR ProtectedRoute not re-evaluating fast enough.", "selector": "[data-testid=\"closer-logout\"]", "priority": "MEDIUM"},
+      {"component": "StatusUpdateDialog (Calendar)", "issue": "react-day-picker day buttons use button[name=\"day\"], NOT [role=\"gridcell\"] button. Manual click works, but selecting a day in automation does not always propagate to the dialog's date state — after picking a day & saving, lead remained 'Not Called' on one run. Likely the popover closes on selection before React state commits, OR the disabled predicate (d) => d < new Date(new Date().setHours(0,0,0,0)) excludes today silently in some TZs. Worth verifying the onSelect handler updates state synchronously and that today is selectable.", "selector": "[data-testid=\"followup-date-button\"]", "priority": "HIGH"}
+    ],
+    "integration_issues": [
+      {"flow": "Lead creation field name (informational, not a regression)", "issue": "Backend POST /api/leads expects 'assigned_closer_id' (NOT 'closer_id'). The review_request implies a 'lead-closer-select' testid; ensure the LeadForm submits assigned_closer_id and the field naming is consistent so admin/filler UI assigns leads correctly.", "affected_selectors": ["[data-testid=\"lead-closer-select\"]", "[data-testid=\"lead-assign-select\"]"]}
+    ],
+    "design_issues": [
+      {"screen": "New User dialog & StatusUpdateDialog", "issues": ["DialogContent missing aria-describedby per Radix warning (carry-over from iteration 2)"]}
+    ]
+  },
+  "verified_flows": [
+    "Admin login -> /admin",
+    "Admin creates closer (Closer One) — direct API: POST /api/users with role=closer returns 200",
+    "Admin creates 2 leads assigned to closer — direct API with assigned_closer_id returns 200 and assigned_closer_name='Closer One'",
+    "Closer login (closer_one_<ts>@example.com / CloserPass123!) -> /closer",
+    "[data-testid=\"closer-dashboard\"] visible",
+    "Both lead cards render with @instagram_id, business name, RETAIL/CAFE category, notes, 'Call <phone>' button (tel: nav not asserted per env note), 'Not Called' red pill",
+    "[data-testid=\"filter-not_called\"] -> 2 cards; [data-testid=\"filter-all\"] -> 2 cards",
+    "[data-testid=\"update-button-<id>\"] opens [data-testid=\"status-update-dialog\"]",
+    "[data-testid=\"status-update-approved\"] + empty notes + Save -> 'Notes are required' toast (PASS)",
+    "Notes 'Signed up' + Save -> dialog closes, card shows 'Approved' pill within poll cycle (PASS)",
+    "[data-testid=\"status-update-followup\"] + notes 'call tomorrow' + Save (no date) -> 'Pick a follow-up date' toast (PASS)",
+    "Lead Filler login -> /filler",
+    "Lead Filler navigates to /admin -> redirected away (lands on /filler)",
+    "Cleanup: DELETE /api/leads/<id> x2 = 200, DELETE /api/users/<closer_id> = 200"
+  ],
+  "partially_verified_flows": [
+    "Calendar date selection in StatusUpdateDialog: day buttons exist (button[name=\"day\"]) and a click registers, but final lead status did not flip to Follow-up in automation — needs manual verification",
+    "filter-follow_today: returned 2 cards in automation (no lead had FU today) — appears the backend filter is not applied for closer role",
+    "closer-logout -> /login: worked in run 1, did not navigate in run 2 (flaky)"
+  ],
+  "test_report_links": ["/app/test_reports/iteration_3.json"],
+  "action_items": [
+    "FIX (HIGH): StatusUpdateDialog calendar — confirm onSelect updates date state before popover closes, and that today is selectable. Consider using onSelect={(d) => { setDate(d); }} with controlled Popover (open state) so the Save still has the date in scope. Add data-testid to individual day buttons to make automation deterministic if possible.",
+    "FIX (MED): CloserDashboard logout — call useNavigate('/login', {replace:true}) after logout() to guarantee URL navigation; relying solely on ProtectedRoute re-render is intermittently failing.",
+    "FIX (MED): Backend GET /api/leads?follow_up_today=true for closer role — ensure the date filter is applied; currently returning all assigned leads. Validate via curl as closer.",
+    "(Minor A11y) Add DialogDescription/aria-describedby to StatusUpdateDialog & New User dialog to silence Radix warnings.",
+    "(Doc) Standardise lead assignment field name. UI form testid is 'lead-closer-select' per review_request but iteration 2 saw 'lead-assign-select'; backend wants 'assigned_closer_id'."
+  ],
+  "critical_code_review_comments": [
+    "CloserDashboard polls /api/leads every 5s — fine, but combine with backend follow_up_today filter bug, list will keep over-reporting if user filters and walks away.",
+    "StatusUpdateDialog Popover is uncontrolled — selecting a date inside a Dialog inside a Popover can race when both close on outside click. Make the Popover controlled and only close it after onSelect commits.",
+    "AuthContext.logout() does not redirect; it relies on each role page or ProtectedRoute to detect user=false. A single explicit navigate('/login') after clearing state would be more robust.",
+    "tel: link is implemented as window.location.href on a button (not <a href=\"tel:\">). Per review_request the spec says 'clickable phone (tel: link)'. Consider rendering an <a href=\"tel:...\"> for proper mobile UX and so screen readers/right-click work."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only run); 1 minor backend filter bug surfaced", "frontend": "12/15 verified, 2 partial, 1 flaky (~80%)"},
+  "test_credentials": "Admin harsh.redctrlcut@gmail.com / H@rsh#Leads7821! | Filler yasmeen.redctrlcut@gmail.com / Y@sm33n#Leads918! | Closer created at runtime (closer_one_<ts>@example.com / CloserPass123!) and cleaned up after each run",
+  "seed_data_creation": "Created Closer One + 2 leads (Shop A/Shop B) per run via API and DELETED at end of run. No residual test data left.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Frontend URL = https://lead-caller-pro.preview.emergentagent.com (from frontend/.env). For role-switch flows you MUST clear cookies AND localStorage between sessions (await page.context.clear_cookies(); page.evaluate(()=>localStorage.clear())) — the logout button only clears token+user, not the cookie reliably across rapid switches. Backend POST /api/leads expects field 'assigned_closer_id' (NOT 'closer_id'). Calendar in StatusUpdateDialog uses button[name=\"day\"], NOT [role=\"gridcell\"] button. Auto-accept window.confirm via page.on('dialog', ...). The Call button uses window.location.href='tel:...' which won't navigate in headless Chromium — do not assert navigation, just assert the visible phone number on the button.",
+  "rca of the issue": "1) Calendar bug RCA: react-day-picker day buttons render as <button name=\"day\"> inside <td>, not inside [role=gridcell] button. Click works in DOM but the parent Popover may close on click before the controlled date setter executes inside the Dialog (Radix focus trap interplay). Mitigation: control Popover open state and explicitly close it inside onSelect after setDate. 2) Logout not navigating RCA: AuthContext.logout sets user=false synchronously and clears token, but does not call navigate(). ProtectedRoute re-render usually catches it but sometimes the route component unmounts before navigation triggers, leaving the URL stale. Mitigation: call navigate('/login', {replace:true}) immediately after logout() in CloserDashboard's logout handler (and in admin/filler too for safety). 3) follow_up_today RCA: backend likely accepts the param only for admin scope; for closer role it short-circuits the filter and returns all assigned leads. Mitigation: apply follow_up_today filter regardless of role in the leads service."
+}

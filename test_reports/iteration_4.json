@@ -1,0 +1,47 @@
+{
+  "summary": "Frontend-only end-to-end regression of RCC Leads Closer flow on https://lead-caller-pro.preview.emergentagent.com after iteration-3 fixes. ALL 13 scenarios from the review_request PASSED in a single clean run. The three fixes applied by E1 are confirmed working: (1) CloserDashboard onLogout now navigates synchronously to /login after clearing auth state, (2) StatusUpdateDialog Popover is controlled via dateOpen state and onSelect commits setDate before closing so the follow-up date propagates into Save, and (3) Call button is a real <a href='tel:...'> with data-testid=call-button-<id>. Backend follow_up_today filter behaves correctly for closer role (Lead B visible, Lead A hidden). No regressions observed.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "StatusUpdateDialog", "issues": ["Radix DialogContent still likely missing aria-describedby (carry-over a11y warning, non-blocking)"]}
+    ]
+  },
+  "verified_flows": [
+    "Admin login -> /admin",
+    "Admin creates Closer Two via POST /api/users (200)",
+    "Admin creates 2 leads (Shop A/B) with assigned_closer_id via POST /api/leads (200)",
+    "Session cleared (cookies + localStorage) between role switches",
+    "Closer login (closer_two_<ts>@example.com / CloserPass123!) -> redirects to /closer",
+    "[data-testid=closer-dashboard] visible",
+    "Both lead cards visible with 'Not Called' red pill, Instagram handle, category, notes",
+    "Call button is <a href='tel:+915000000001'> with data-testid=call-button-<id> — confirmed tel: scheme",
+    "update-button-<id> opens status-update-dialog",
+    "status-update-approved + empty notes + Save -> 'Notes are required' toast (no save)",
+    "Notes 'Signed up' + Save -> dialog closes, card shows 'Approved' green pill within 5s",
+    "status-update-followup + notes 'call tomorrow' + Save (no date) -> 'Pick a follow-up date' toast",
+    "followup-date-button -> Calendar popover opens, picking TODAY (button[name='day']) closes popover, Save -> card shows Follow-up yellow pill with FU: <today> badge",
+    "filter-follow_today -> Lead B visible, Lead A NOT visible (backend filter works for closer role)",
+    "filter-not_called -> empty (Lead A approved, Lead B follow_up) — count 0 as expected",
+    "closer-logout -> URL navigates to /login synchronously",
+    "Filler login (yasmeen.redctrlcut@gmail.com) -> /filler loads",
+    "Cleanup: DELETE both leads (200) + DELETE closer (200)"
+  ],
+  "test_report_links": ["/app/test_reports/iteration_4.json"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "CloserDashboard still polls /api/leads every 5s on an interval; consider cancelling when dialog is open or moving to SSE/websocket for efficiency (non-blocking).",
+    "StatusUpdateDialog resets its internal status/date only on mount; if the same dialog is reopened for a different lead it relies on parent unmount/remount via key=lead.id — currently works because `selected && <StatusUpdateDialog ... />` unmounts, but worth adding an explicit key or useEffect reset on lead.id for robustness.",
+    "a11y: Add DialogDescription id + aria-describedby on StatusUpdateDialog to silence Radix console warning.",
+    "Tel: handler calls api.patch in fire-and-forget (.catch(()=>{})); consider surfacing errors via toast so closers know if the status transition to 'called' failed."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only)", "frontend": "13/13 (100%)"},
+  "test_credentials": "Admin harsh.redctrlcut@gmail.com / H@rsh#Leads7821! | Filler yasmeen.redctrlcut@gmail.com / Y@sm33n#Leads918! | Closer created at runtime closer_two_<ts>@example.com / CloserPass123! (cleaned up after run)",
+  "seed_data_creation": "Created 1 closer + 2 leads via API, fully DELETED at end of run. No residual test data from this iteration.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All closer-flow scenarios pass cleanly. Key env notes: Frontend URL in frontend/.env; always clear cookies + localStorage between role switches; backend POST /api/leads uses field 'assigned_closer_id'; calendar day buttons are button[name='day'] (pick today by matching day-of-month text); auto-accept window.confirm; Call tel: link works but do NOT assert navigation in headless — assert href starts with 'tel:'. No outstanding bugs on closer dashboard as of this iteration.",
+  "rca of the issue": "N/A — iteration 3 issues fully resolved. Calendar fix (controlled Popover + setDate-then-close in onSelect) propagates date into save; logout fix (explicit navigate('/login',{replace:true}) after logout()) removes the stale-URL race; tel: <a> element provides correct mobile semantics; backend follow_up_today filter is honored for closer role."
+}

@@ -1,0 +1,142 @@
+{
+  "theme_and_archetype": {
+    "theme": "LIGHT",
+    "archetype": "Archetype 4: Swiss & High-Contrast",
+    "reasoning": "A high-contrast, functional, and authority-driven CRM interface ensures clarity for fast-paced sales operations. The specific requested colors (Deep Red, Emerald, Charcoal) work best when paired with stark light backgrounds and sharp components."
+  },
+  "typography": {
+    "primary_font": "Outfit",
+    "body_font": "Manrope",
+    "heading_strategy": "Outfit provides a clean, modern, and slightly authoritative presence for dashboards without feeling overly corporate. Banned fonts (Inter, Roboto) are avoided to maintain a premium feel.",
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl font-black tracking-tight",
+      "h2": "text-2xl sm:text-3xl font-bold tracking-tight",
+      "h3": "text-xl sm:text-2xl font-semibold",
+      "h4": "text-lg sm:text-xl font-medium",
+      "body": "text-base leading-relaxed text-zinc-700",
+      "labels": "text-xs font-bold uppercase tracking-[0.2em] text-zinc-500"
+    }
+  },
+  "colors": {
+    "background": {
+      "main": "#FAFAFA",
+      "card": "#FFFFFF",
+      "sidebar": "#18181B"
+    },
+    "primary": {
+      "DEFAULT": "#8B0000",
+      "hover": "#700000",
+      "foreground": "#FFFFFF"
+    },
+    "status": {
+      "not_called": {
+        "bg": "#FEF2F2",
+        "text": "#8B0000",
+        "border": "#FECACA"
+      },
+      "approved": {
+        "bg": "#ECFDF5",
+        "text": "#047857",
+        "border": "#A7F3D0",
+        "primary": "#10B981"
+      },
+      "follow_up": {
+        "bg": "#FFFBEB",
+        "text": "#B45309",
+        "border": "#FDE68A",
+        "primary": "#F59E0B"
+      },
+      "rejected": {
+        "bg": "#F3F4F6",
+        "text": "#4B5563",
+        "border": "#E5E7EB",
+        "primary": "#9CA3AF"
+      }
+    },
+    "text": {
+      "primary": "#09090B",
+      "secondary": "#52525B",
+      "inverse": "#FAFAFA"
+    },
+    "borders": "#E4E4E7"
+  },
+  "layout_and_spacing": {
+    "spacing_scale": "Generous spacing strategy. Use p-6 or p-8 for desktop panels. Mobile cards use p-4 or p-5.",
+    "border_radius": "Subtle roundness. Cards use rounded-xl. Buttons use rounded-lg. Avoid pills unless for status badges.",
+    "split_screen_desktop": {
+      "left_pane": "col-span-4 lg:col-span-3 border-r border-zinc-200 bg-zinc-50 h-screen flex flex-col p-6 items-center justify-center",
+      "right_pane": "col-span-8 lg:col-span-9 h-screen overflow-y-auto bg-white p-6 md:p-10"
+    },
+    "mobile_first_closer": {
+      "container": "max-w-md mx-auto min-h-screen bg-zinc-50 pb-24",
+      "card": "bg-white border border-zinc-200 rounded-xl p-5 mb-4 shadow-sm relative",
+      "sticky_actions": "fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-zinc-200 p-4 z-50 flex gap-3 max-w-md mx-auto"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#8B0000] text-white hover:bg-[#700000] active:scale-95 transition-all shadow-sm font-semibold h-12 w-full",
+      "call_action": "bg-[#8B0000] text-white rounded-full p-4 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center",
+      "success": "bg-[#10B981] text-white hover:bg-[#059669]",
+      "secondary": "bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
+    },
+    "lead_card": {
+      "structure": "Header (Name & IG ID) -> Body (Category, Notes) -> Footer (Follow-up Date, Closer Notes) -> Absolute Call Button floating on right side",
+      "phone_link": "text-[#8B0000] font-bold text-lg flex items-center gap-2 tap-highlight-transparent"
+    },
+    "forms": {
+      "inputs": "Shadcn inputs customized with h-12, bg-zinc-50 focus:bg-white focus:ring-2 focus:ring-[#8B0000]/20 border-zinc-200",
+      "labels": "text-sm font-semibold text-zinc-700 mb-1.5"
+    },
+    "tables": {
+      "style": "Go cardless. Full-width tables with sharp borders, row hover states (hover:bg-zinc-50). Status columns use distinct colored badges."
+    }
+  },
+  "motion_and_interactions": {
+    "hover_states": "Cards elevate slightly (-translate-y-[2px]) and cast a soft shadow (shadow-md) on desktop. Buttons have a scale-95 press state.",
+    "transitions": "transition-all duration-200 ease-out",
+    "list_animations": "Staggered fade-in and slide-up for lead cards when loading.",
+    "modals": "Use Shadcn Dialog with backdrop-blur-sm. Smooth slide-up entrance for mobile."
+  },
+  "icons": {
+    "library": "lucide-react",
+    "usage": "Use stroke-width 2.2 for a crisper, more premium look. Icons should be sized at 20px (w-5 h-5) typically, or 24px (w-6 h-6) for main call actions."
+  },
+  "media_and_images": {
+    "logo_placeholder": "RCC Leads",
+    "login_background": {
+      "url": "https://images.unsplash.com/photo-1767170476039-e2bc8916684a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTZ8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMGxpZ2h0JTIwZ3JleSUyMG1pbmltYWwlMjBwcmVtaXVtJTIwdGV4dHVyZSUyMGJhY2tncm91bmR8ZW58MHx8fHwxNzc2ODk3Njk1fDA&ixlib=rb-4.1.0&q=85",
+      "category": "background",
+      "description": "Abstract white curved architectural background used for login screen right side panel"
+    },
+    "user_avatars": [
+      {
+        "url": "https://images.unsplash.com/photo-1744956581253-abfd023141b1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzR8MHwxfHNlYXJjaHwyfHxwcm9mZXNzaW9uYWwlMjBidXNpbmVzcyUyMGhlYWRzaG90JTIwYXZhdGFyfGVufDB8fHx8MTc3Njg5NzY5NXww&ixlib=rb-4.1.0&q=85",
+        "category": "avatar",
+        "description": "Admin/Filler User Avatar"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1609436132311-e4b0c9370469?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzR8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBidXNpbmVzcyUyMGhlYWRzaG90JTIwYXZhdGFyfGVufDB8fHx8MTc3Njg5NzY5NXww&ixlib=rb-4.1.0&q=85",
+        "category": "avatar",
+        "description": "Closer User Avatar"
+      }
+    ]
+  },
+  "testing_attributes": {
+    "instructions": "All interactive elements MUST include data-testid. Format: kebab-case, role-based.",
+    "examples": [
+      "data-testid='login-submit-button'",
+      "data-testid='lead-call-button'",
+      "data-testid='status-update-approved'",
+      "data-testid='lead-card-123'"
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Prioritize mobile-first design for the Closer view, implementing smooth bottom-sticky actions and card-based tap-friendly layouts.",
+    "Ensure standard HTML input/select elements are completely avoided for complex interactions (use Shadcn Select, Dialog, Calendar).",
+    "Use 'Outfit' for all Headings (H1-H4) and 'Manrope' for body text. Add the fonts to tailwind config and main css via Google Fonts import.",
+    "Install and configure 'lucide-react' for all icons.",
+    "Admin/Lead Filler split screen must be side-by-side on desktop, hiding the sidebar on mobile or reflowing it into a top bar.",
+    "The 'Deep Red' (#8B0000) must primarily serve as the action color for calling and urgent 'Not Called' statuses, while 'Emerald' is exclusively for success/approved."
+  ]
+}

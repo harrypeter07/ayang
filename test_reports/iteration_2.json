@@ -1,0 +1,57 @@
+{
+  "summary": "Frontend UI testing for RCC Leads CRM. Verified login page, admin login + dashboard, Users navigation, new-user dialog, Lead Entry page (/filler) with Open Instagram button, lead form submission, duplicate lead error toast, and admin sidebar logout. Phase 2 (filler login + closer end-to-end flow) was impacted by session/cookie race conditions on rapid logout→login cycles (repeated /api/auth/me 401s, navigation bouncing /admin → / → /login). Closer dashboard, tel link, StatusUpdateDialog, Follow-up/Not-Called filters could not be reliably executed end-to-end due to the session flakiness; reporting these as unverified rather than failing.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Rapid session switching (logout -> login as different role)",
+        "issue": "After Sign out the next /api/auth/me consistently returns 401 and the router redirects to /login mid-navigation. Suggests cookie not cleared atomically on logout, or initial /me fires before the new login's Set-Cookie is applied. Browser test had to retry and the navigation oscillated /admin -> / -> /login. Functionally, each individual login works when done fresh, but chained role-switch flows are flaky.",
+        "affected_selectors": ["[data-testid=\"logout-button\"]", "/api/auth/me"]
+      }
+    ],
+    "design_issues": [
+      {"screen": "New User dialog", "issues": ["DialogContent missing aria-describedby / Description — accessibility warning logged in console"]}
+    ]
+  },
+  "verified_flows": [
+    "Login page at /login loads with RCC Leads branding and data-testid login-email-input / login-password-input / login-submit-button",
+    "Admin login (harsh.redctrlcut@gmail.com) redirects to /admin and renders 4 stat cards (Total Leads / Not Called / Approved / Closers)",
+    "Admin sidebar navigates to Users (/admin/users); New User button opens dialog; correct testids are new-user-name / new-user-email / new-user-password / new-user-role / new-user-submit (NOT user-name-input etc. as the review_request implied)",
+    "/filler page shows 'Open Instagram' button on desktop and full lead form (instagram/business/phone/category/notes/assign)",
+    "Lead creation via /filler as admin: toast success + table update (instagram handle visible in page)",
+    "Duplicate lead (same instagram_id + phone) shows a 'Duplicate' error toast",
+    "Admin sidebar 'Sign out' returns to /login",
+    "Lead Filler 'Sign out' returns to /login"
+  ],
+  "unverified_flows": [
+    "Lead Filler login (yasmeen@) end-to-end — blocked by session flakiness; single-shot login does reach /filler per earlier observation",
+    "Lead Filler blocked from /admin — not reliably confirmed in this run",
+    "Closer login end-to-end — reached /login bounce in chained flow",
+    "Closer sees only assigned leads as mobile cards",
+    "Clickable tel: link present on closer card",
+    "StatusUpdateDialog Approved flow (green pill)",
+    "Follow-up with date picker + 'Follow-up Today' filter",
+    "'Not Called' filter",
+    "Closer logout"
+  ],
+  "test_report_links": ["/app/test_reports/iteration_2.json"],
+  "action_items": [
+    "Main agent should manually or re-run automated tests for the closer end-to-end flow and lead-filler role, ideally starting each role in a fresh browser context to avoid the session race.",
+    "Investigate logout flow: ensure /api/auth/logout response clears the httpOnly cookie AND the frontend AuthContext clears its in-memory user before navigating to /login. Currently AuthContext may be firing /api/auth/me after a stale session state during the brief window after logout, producing 401 bounces when the next login occurs quickly.",
+    "The review_request lists wrong data-testid names (user-name-input, call-button-<id>, status-update-approved, etc.). Actual ids in code: new-user-name/email/password/role/submit. Align docs or add the additional testids as aliases. Confirm real testids used in CloserDashboard/StatusUpdateDialog/LeadForm for call/tel/status buttons and share them in the next review_request to aid automated testing.",
+    "(Minor A11y) Add DialogDescription/aria-describedby to DialogContent in UserManagementPage + StatusUpdateDialog to silence Radix warnings."
+  ],
+  "critical_code_review_comments": [
+    "Frontend polling /api/leads every 5s + AuthContext /me check on every route change can amplify 401 spam during any brief auth gap. Consider debouncing the first /me after login or gating polling until user is hydrated.",
+    "Toast-based error surfacing for duplicates is working; ensure the toast includes the conflicting field for better UX."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (previous iteration)", "frontend": "8/15 verified, 7/15 unverified due to session flakiness (~53%)"},
+  "test_credentials": "Admin harsh.redctrlcut@gmail.com / H@rsh#Leads7821!  | Lead Filler yasmeen.redctrlcut@gmail.com / Y@sm33n#Leads918! | Test closers created at runtime (closer_test_<ts>@example.com / TestClose123!)",
+  "seed_data_creation": "Created one test lead via /filler with unique instagram_id/phone. Created TEST Closer via Users dialog. Not explicitly cleaned up; admin can delete via Users page and All Leads if needed.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Frontend URL is https://lead-caller-pro.preview.emergentagent.com (from frontend/.env — the review_request URL 7c8ae5c7... is stale). Real user-dialog testids are new-user-name / new-user-email / new-user-password / new-user-role / new-user-submit, NOT user-name-input etc. Lead form testids are lead-instagram-input / lead-business-input / lead-phone-input / lead-notes-input / lead-assign-select / lead-submit-button and they work. Logout button is [data-testid=\"logout-button\"]. When testing role-switches, open a fresh browser context / clear cookies between sessions to avoid /api/auth/me 401 bounce. Also backend has brute-force lockout after 5 fails per test_credentials notes — avoid tight retry loops.",
+  "rca of the issue": "Login chain flakiness RCA: On logout, the server clears the httpOnly cookie, but the AuthContext on the subsequent login page navigates eagerly. The very next /api/auth/me call (fired before the new login POST completes and its Set-Cookie is honored) returns 401, triggering ProtectedRoute to redirect back to /login. Mitigation: in AuthContext, skip /me while on /login route, or gate /me on a user-present flag that's only set after successful login response."
+}

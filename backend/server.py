@@ -27,6 +27,17 @@ db_name = os.environ.get("DB_NAME")
 if not mongo_url or not db_name:
     raise Exception("Missing environment variables: MONGO_URL or DB_NAME")
 
+# Be tolerant of common deployment input mistakes in env dashboards.
+mongo_url = mongo_url.strip().strip("\"'")
+if mongo_url.startswith("MONGO_URL="):
+    mongo_url = mongo_url.split("=", 1)[1].strip().strip("\"'")
+
+if not (mongo_url.startswith("mongodb://") or mongo_url.startswith("mongodb+srv://")):
+    raise Exception(
+        "Invalid MONGO_URL format. Value must start with "
+        "'mongodb://' or 'mongodb+srv://'."
+    )
+
 client = AsyncIOMotorClient(mongo_url)
 db = client[db_name]
 

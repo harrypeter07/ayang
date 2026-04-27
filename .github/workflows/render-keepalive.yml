@@ -25,7 +25,7 @@ jobs:
   ping-render:
     runs-on: ubuntu-latest
     env:
-      TARGET_URL: "https://abackend-x026.onrender.com"
+      TARGET_URL: "https://abackend-x026.onrender.com/api/"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

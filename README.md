@@ -2,7 +2,7 @@
 
 This repo includes a GitHub Actions workflow to ping your Render backend:
 
-- Target backend: `https://abackend-x026.onrender.com/api/`
+- Target backend: `https://abackend-x026.onrender.com/healthz`
 - Workflow file: `.github/workflows/render-keepalive.yml`
 - Ping script: `scripts/ping-render.sh`
 

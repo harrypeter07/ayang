@@ -47,6 +47,27 @@ api_router = APIRouter(prefix="/api")
 JWT_ALGORITHM = "HS256"
 JWT_SECRET = os.environ["JWT_SECRET"]
 
+# ---------- Public health / keep-alive endpoints ----------
+@app.get("/")
+async def root_web():
+    return {"message": "RCC Leads API running"}
+
+@app.get("/healthz")
+async def healthz():
+    return {
+        "ok": True,
+        "service": "rcc-leads-backend",
+        "time_utc": datetime.now(timezone.utc).isoformat(),
+    }
+
+@api_router.get("/healthz")
+async def api_healthz():
+    return {
+        "ok": True,
+        "service": "rcc-leads-backend",
+        "time_utc": datetime.now(timezone.utc).isoformat(),
+    }
+
 # ---------- Password + JWT ----------
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
